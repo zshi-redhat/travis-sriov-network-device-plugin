@@ -1,0 +1,19 @@
+apiVersion: "kubernetes.cni.cncf.io/v1"
+kind: Network
+metadata:
+  name: sriov-net1
+spec: 
+  config: '{
+	"type": "sriov",
+	"name": "sriov-cni",
+        "if0": "eno1",
+	"ipam": {
+                "type": "host-local",
+                "name": "host-local-cni",
+                "subnet": "10.56.217.0/24",
+                "routes": [{
+                        "dst": "0.0.0.0/0"
+                }],
+		"gateway": "10.56.217.1"
+        }
+}'

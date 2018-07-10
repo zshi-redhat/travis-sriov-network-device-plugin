@@ -39,6 +39,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+	"k8s.io/kubernetes/pkg/kubelet/cm/devicemanager/checkpoint"
 )
 
 const (
@@ -54,19 +55,6 @@ const (
 	resourceName         = "intel.com/sriov"
 	sriovAnnotationKey   = "TEST-SRIOV-VF-INFO"
 )
-
-type podDeviceConf struct {
-	PodUID          string          `json:"podUID"`
-	ContainerName   string          `json:"containerName"`
-	ResourceName    string          `json:"resourceName"`
-	DeviceIDs       []string        `json:"deviceIDs"`
-	AllocResp       string          `json:"allocResp"`
-}
-
-type CheckPointFile struct {
-	PodDeviceEntries        []podDeviceConf
-	RegisteredDevices       map[string][]string
-}
 
 // sriovManager manages sriov networking devices
 type sriovManager struct {
@@ -377,13 +365,13 @@ func (sm *sriovManager) UpdatePodAnnotation(pciAddrs string) {
 			glog.Errorf("Error. failed to read kubelet internal checkpoint file %v", err)
 			continue
 		}
-		c := &CheckPointFile{}
+		c := &checkpoint.Data{}
 		if err = json.Unmarshal(checkpointBytes, c); err != nil {
 			glog.Errorf("Error. falied to parse kubelet internal checkpoint file")
 			continue
 		}
 
-		for _, info := range c.PodDeviceEntries {
+		for _, info := range c.Data.PodDeviceEntries {
 			if reflect.DeepEqual(info.DeviceIDs, splittedPciAddrs) {
 				podUID =  info.PodUID
 				break
