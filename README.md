@@ -90,29 +90,45 @@ $ cp deployments/cni-conf.json /etc/cni/net.d/
 ```
 
 >Note: ensure the multus configuration file is the first file in lexicographical order in the folder
- 4. Create the SRIOV Network CRD
+>Note: above cni-conf.json use flannel as default plugin, ensure flannel is configured correctly before creating pod
+>Note: ensure "kubeconfig" in cni-conf.json is set to the correct path in your environment
+
+ 4. Create cluster role and bindings for multus
+```
+$ kubectl create -f <path-to-multus-cni>/examples/npwg-demo-1/02_clusterrole.yml
+$ kubectl create clusterrolebinding rolebind-multus-crd-overpowered-<node-name> --clusterrole=multus-crd-overpowered --user=system:node:<node-name>
+```
+
+ 5. Create the SRIOV Network CRD
 ```
 $ kubectl create -f deployments/crdnetwork.yaml
 $ kubectl create -f deployments/sriov-crd.yaml
 ```
  
- 5. Run build docker script to create SRIOV Network Device Plugin Docker image
+>Note: ensure the "if0" config in sriov-crd.yaml file is set to the correct PF name of SRIOV VFs.
+ 6. Run build docker script to create SRIOV Network Device Plugin Docker image
  ```
 $ cd deployments/
 $ ./build_docker.sh
 ``` 
- 6. Create SRIOV Network Device Plugin Pod
+ 7. Create SRIOV Network Device Plugin Pod
  ```
 $ kubectl create -f pod-sriovdp.yaml
 ```
  >Note: This is for demo purposes, the SRIOV Device Plugin binary must be executed from within the pod
 
- 7. Get a bash terminal to the SRIOV Network Device Plugin Pod
+ 8. Apply rbac to allow SRIOV DP list Pods at cluster scope
+ ```
+$ kubectl create -f sriovdp-rbac.yaml
+```
+ >Note: This is for demo purposes which allow SRIOV DP to list Pods and find the correct one to update annotations
+
+ 9. Get a bash terminal to the SRIOV Network Device Plugin Pod
  ```
 $ kubectl exec -it sriov-device-plugin bash
 ```
 
- 8. Execute the SRIOV Network Device Plugin binary from within the Pod
+ 10. Execute the SRIOV Network Device Plugin binary from within the Pod
 ````
 $ ./usr/bin/sriovdp --logtostderr -v 10
 
