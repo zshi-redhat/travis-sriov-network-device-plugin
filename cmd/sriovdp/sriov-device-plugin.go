@@ -29,10 +29,12 @@ import (
 	"time"
 
 	"github.com/golang/glog"
+	"github.com/fsnotify/fsnotify"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	pluginapi "k8s.io/kubernetes/pkg/kubelet/apis/deviceplugin/v1beta1"
+	registerapi "k8s.io/kubernetes/pkg/kubelet/apis/pluginregistration/v1beta1"
 )
 
 const (
@@ -186,12 +188,12 @@ func (sm *sriovManager) GetDeviceState(DeviceName string) string {
 	return pluginapi.Healthy
 }
 
+func (sm *sriovManager) GetInfo(ctx context.Context, rqt *registerapi.InfoRequest) (*registerapi.PluginInfo, error) {
+	return &registerapi.PluginInfo{Type: "DevicePlugin", Name: resourceName, SupportedVersions: []string{"v1alpha", "v1beta"}}, nil
+}
+
 // Discovers SRIOV capabable NIC devices.
 func (sm *sriovManager) Start() error {
-	glog.Infof("Discovering SRIOV network device[s]")
-	if err := sm.discoverNetworks(); err != nil {
-		return err
-	}
 	pluginEndpoint := filepath.Join(pluginapi.DevicePluginPath, sm.socketFile)
 	glog.Infof("Starting SRIOV Network Device Plugin server at: %s\n", pluginEndpoint)
 	lis, err := net.Listen("unix", pluginEndpoint)
@@ -353,9 +355,23 @@ func main() {
 	}
 	sm.cleanup()
 
+	// respond to kubelet socket file re-creation
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		glog.Errorf("Unable to create fsnotify watcher")
+		return
+	}
+	defer watcher.Close()
+
 	// respond to syscalls for termination
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+
+	// Discover SR-IOV network device[s]
+	if err := sm.discoverNetworks(); err != nil {
+		glog.Errorf("sriovManager.discoverNetworks() failed: %v", err)
+		return
+	}
 
 	// Start server
 	if err := sm.Start(); err != nil {
@@ -364,7 +380,7 @@ func main() {
 	}
 
 	// Registers with Kubelet.
-	err := Register(path.Join(pluginMountPath, kubeletEndpoint), sm.socketFile, resourceName)
+	err = Register(path.Join(pluginMountPath, kubeletEndpoint), sm.socketFile, resourceName)
 	if err != nil {
 		// Stop server
 		sm.grpcServer.Stop()
@@ -373,11 +389,25 @@ func main() {
 	}
 	glog.Infof("SRIOV Network Device Plugin registered with the Kubelet")
 
-	// Catch termination signals
-	select {
-	case sig := <-sigCh:
-		glog.Infof("Received signal \"%v\", shutting down.", sig)
-		sm.Stop()
-		return
+	// Catch termination signals and kubelet restart
+	for {
+		err = watcher.Add(filepath.Join(pluginMountPath, kubeletEndpoint))
+		if err != nil {
+			glog.Errorf("Unable to add: %s to watcher", filepath.Join(pluginMountPath, kubeletEndpoint))
+			watcher.Close()
+			return
+		}
+
+		select {
+		case sig := <-sigCh:
+			glog.Infof("Received signal \"%v\", shutting down.", sig)
+			sm.Stop()
+			return
+		case event := <-watcher.Events:
+			if event.Op&fsnotify.Remove == fsnotify.Remove {
+				glog.Infof("Received kubelet restart notification \"%v\". shutting down.", event)
+				sm.Start()
+			}
+		}
 	}
 }
