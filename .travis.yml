@@ -8,6 +8,6 @@ before_install:
   - sudo apt-get update -qq
 
 script:
-  - sudo make build
-  - sudo make
-  - sudo make image
+  - make build
+  - make
+  - make image
