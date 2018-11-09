@@ -4,6 +4,9 @@ language: go
 # sudo: requried
 dist: trusty
 
+before_install:
+  - sudo apt-get update -qq
+
 script:
   - sudo make build
   - sudo make
