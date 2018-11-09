@@ -1,0 +1,10 @@
+language: go
+# see https://docs.travis-ci.com/user/reference/overview/#Virtualization-environments
+# for the detail
+# sudo: requried
+dist: trusty
+
+script:
+  - sudo make build
+  - sudo make
+  - sudo make image
