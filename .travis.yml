@@ -1,11 +1,6 @@
 language: go
-# see https://docs.travis-ci.com/user/reference/overview/#Virtualization-environments
-# for the detail
 # sudo: requried
 dist: trusty
-
-before_install:
-  - sudo apt-get update -qq
 
 script:
   - make build
