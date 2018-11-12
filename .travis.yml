@@ -15,6 +15,7 @@ deploy:
     on:
       branch: master
   - provider: script
+    skip_cleanup: true
     script:
       - docker tag nfvpe/sriov-device-plugin nfvpe/sriov-device-plugin:release-v1
       - docker push nfvpe/sriov-device-plugin:release-v1
