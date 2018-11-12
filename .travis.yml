@@ -11,6 +11,6 @@ before_deploy:
 deploy:
   - provider: script
     skip_cleanup: true
-    script: docker push nfvpe/sriov-device-plugin:latest
+    script: docker push nfvpe/sriov-device-plugin
     on:
       branch: master
