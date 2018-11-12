@@ -1,6 +1,4 @@
 language: go
-# sudo: requried
-dist: trusty
 
 script:
   - make build
