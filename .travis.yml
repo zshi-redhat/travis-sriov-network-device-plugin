@@ -14,7 +14,7 @@ deploy:
     on:
       branch: master
   - provider: script
-    script: ->
+    script: >
       bash -c '
       docker tag nfvpe/multus nfvpe/sriov-device-plugin:release-v1;
       docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS";
