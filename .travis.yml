@@ -5,9 +5,6 @@ script:
   - make
   - make image
 
-after_script:
-  - docker images
-
 before_deploy:
   - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
 
@@ -16,7 +13,7 @@ deploy:
     skip_cleanup: true
     script: >
       bash -c '
-      docker push nfvpe/sriov-device-plugin'
+      docker push nfvpe/sriov-device-plugin:latest'
     on:
       branch: master
   - provider: script
