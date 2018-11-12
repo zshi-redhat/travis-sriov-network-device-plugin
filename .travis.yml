@@ -15,9 +15,8 @@ deploy:
     on:
       branch: master
   - provider: script
-    script: >
-      bash -c '
-      docker tag nfvpe/sriov-device-plugin nfvpe/sriov-device-plugin:release-v1;
-      docker push nfvpe/sriov-device-plugin:release-v1'
+    script:
+      - docker tag nfvpe/sriov-device-plugin nfvpe/sriov-device-plugin:release-v1
+      - docker push nfvpe/sriov-device-plugin:release-v1
     on:
       branch: release-v1
