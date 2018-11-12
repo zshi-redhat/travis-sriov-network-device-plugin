@@ -7,13 +7,13 @@ script:
 
 before_deploy:
   - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
-  - docker tag nfvpe/sriov-device-plugin nfvpe/sriov-device-plugin:release-v1
+  - docker tag nfvpe/sriov-device-plugin zenghui/sriov-device-plugin:release-v1
 
 deploy:
   - provider: script
     skip_cleanup: true
     script:
-      - docker push nfvpe/sriov-device-plugin:release-v1
+      - docker push zenghui/sriov-device-plugin:release-v1
     on:
       all_branches: true
       condition: $TRAVIS_BRANCH =~ ^release
