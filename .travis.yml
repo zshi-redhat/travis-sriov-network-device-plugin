@@ -7,6 +7,7 @@ script:
 
 before_deploy:
   - docker login -u "$REGISTRY_USER" -p "$REGISTRY_PASS"
+  - docker tag nfvpe/sriov-device-plugin nfvpe/sriov-device-plugin:release-v1
 
 deploy:
   - provider: script
