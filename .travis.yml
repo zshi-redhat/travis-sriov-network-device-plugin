@@ -13,7 +13,6 @@ deploy:
     skip_cleanup: true
     script:
       - docker tag nfvpe/sriov-device-plugin nfvpe/sriov-device-plugin:release-v1
-      - docker push nfvpe/sriov-device-plugin:release-v1
     on:
       all_branches: true
       condition: $TRAVIS_BRANCH =~ ^release
